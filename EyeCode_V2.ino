@@ -1,10 +1,9 @@
 /*
 Greetings Ram - Blinking Eye Code
 Authors: Michael Lu & Jose Mojica-Ramos (Fall 2024)
-Editor: Jose Mojica-Ramos
-Edited: March 5, 2025
+Editor: Jose Mojica-Ramos & Michelle Vasquez
+Edited: April 2, 2025
 */
-
 
 
 //  Eye Mechanism Code
@@ -18,28 +17,36 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define SERVOMAX 520  // this is the 'maximum' pulse length count (out of 4096)
 
 // our servo # counter
-uint8_t servonum = 0;
+uint8_t servonum = 0;  // "Anything with an "x" is Left/Right, Anything with a "y" is Up/Down" - Michael
 int xVal, yVal;
 int xSum = 512, ySum = 512;
-int lexpulse, rexpulse;
-int leypulse, reypulse;
-int TL_Lid, BL_Lid, TR_Lid, BR_Lid;
+int xMovement;                       // Left/Right Movement
+int UpY_Movement, DownY_Movement;    // Up/Down Movement
+int TL_Lid, BL_Lid, TR_Lid, BR_Lid;  // Eyelids variables
 int trimval;
+int tempVar;  // Temp Value for moving left and right
 /* Legend:
-      TL_Lid: Top-Left Lid
-      BL_Lid: Bottom-Left Lid
-      TR_Lid: Top-Right Lid
-      BR_Lid: Bottom-Right Lid
+      LR    : Left-Right        Pin 0     (280 = Right, 380 = Left)
+      EUD   : Eyes Up-Down      Pin 1     (380, 500)
+      TL_Lid: Top-Left Lid      Pin 2     605
+      BL_Lid: Bottom-Left Lid   Pin 3     135
+      TR_Lid: Top-Right Lid     Pin 4     95
+      BR_Lid: Bottom-Right Lid  Pin 5     555
+      Gold-Arm: Arm Servo 1     Pin 6     45
+      Black_Arm: Arm Servo 2    Pin 7     180
 */
-
 
 int sensorValue = 0;
 int outputValue = 0;
 int switchval = 0;
 
+// Serial Motor Input
+char receivedChar;
+boolean newData = false;
+
 void setup() {
-  Serial.begin(9600);
-  Serial.println("\nStarting Program:\n");
+  Serial.begin(9600);                       // Serial Initialization **(DON'T TOUCH)**
+  Serial.println("\nStarting Program:\n");  // Just to verify in Monitor that code is running
 
   pinMode(8, INPUT);   //+x
   pinMode(9, INPUT);   //-x
@@ -49,7 +56,6 @@ void setup() {
   //INPUT_PULLUP is more stable than INPUT, but OUTPUT is most stable
   pinMode(7, OUTPUT);  //blinking eyes pin
 
-
   digitalWrite(7, LOW);
   digitalWrite(8, LOW);
   digitalWrite(9, LOW);
@@ -58,7 +64,6 @@ void setup() {
 
 
   pwm.begin();
-
   pwm.setPWMFreq(60);  // Analog servos run at ~60 Hz updates
 
 
@@ -75,292 +80,149 @@ void setup() {
 }
 
 
-
-
-
-
-
-
-
-
 void loop() {
-  delay(3000);  // 3 Second delay
-  Serial.println("Starting Loop.");
+  recInfo();
+  loop2();
+}
 
 
-  if (digitalRead(8) == HIGH && xSum < 1024) {
-    xSum += 20;
+
+
+// Takes input to then call the right case
+void recInfo() {
+  if (Serial.available() > 0) {
+    receivedChar = Serial.read();
+    newData = true;
   }
-  if (digitalRead(9) == HIGH && xSum > 0) {
-    xSum -= 20;
-  }
-  if (digitalRead(10) == HIGH && ySum < 700) {
-    ySum += 20;
-  }
-  if (digitalRead(11) == HIGH && ySum > 0) {
-    ySum -= 20;
-  }
+}
 
+// void lightLED(){
+//   int led = (receivedChar - '0');
+//   while(newData == true){
+//     digitalWrite(led, HIGH);
+//     delay(500);
+//     digitalWrite(led, LOW);
+//     newData = false;
+//   }
+// }
 
 
-  // Setup to CLOSE eyes
-  Serial.println("First Blink.");
-  digitalWrite(7, HIGH);  // Set Eyes to CLOSE
 
+// Loop used to manually test all components
+void loop2() {
+  delay(1000);
+  int led = (receivedChar - '0');
+  // while (newData == true) {
+    Serial.println("Starting Loop.");
+    delay(100);
+    Serial.print("Received Character: ");
+    Serial.println(receivedChar);
+    delay(100);
 
-  // Serial.print("blinking: ");
-  // Serial.println(int(digitalRead(7)));
-  // Serial.print("y movement: ");
-  // Serial.println(ySum);
+    if (digitalRead(8) == HIGH && xSum < 1024) {
+      xSum += 20;
+    }
+    if (digitalRead(9) == HIGH && xSum > 0) {
+      xSum -= 20;
+    }
+    if (digitalRead(10) == HIGH && ySum < 700) {
+      ySum += 20;
+    }
+    if (digitalRead(11) == HIGH && ySum > 0) {
+      ySum -= 20;
+    }
 
-  xVal = xSum;
-  lexpulse = map(xVal, 0, 1023, 280, 380);
 
-  yVal = ySum;
-  leypulse = map(yVal, 0, 1023, 380, 500);
 
 
-  pwm.setPWM(0, 0, lexpulse);
-  pwm.setPWM(1, 0, leypulse);
+    // Looking RIGHT
+    if (receivedChar == 'R') {
+      digitalWrite(led, HIGH);
+      delay(100);
+      Serial.println("Looking RIGHT.");
+      digitalWrite(7, HIGH);  // Set Eyes to move right
 
 
-  if (digitalRead(7) == HIGH) {  // Closes Eyes
-    pwm.setPWM(2, 0, 605);
-    pwm.setPWM(3, 0, 135);
-    pwm.setPWM(4, 0, 95);
-    pwm.setPWM(5, 0, 555);
-  }
+      xVal = xSum;
+      xMovement = map(yVal, 0, 1023, 280, 380);
 
-  else if (digitalRead(7) == LOW) {  // Open Eyes
-    pwm.setPWM(2, 0, TL_Lid);
-    pwm.setPWM(3, 0, BL_Lid);
-    pwm.setPWM(4, 0, TR_Lid);
-    pwm.setPWM(5, 0, BR_Lid);
-  }
+      pwm.setPWM(0, 0, xMovement);
 
 
-  // Gets ready to Open eyes
-  delay(200);            // 0.2 Second delay to replicate blinking
-  digitalWrite(7, LOW);  // Sets Eyes to Open
+      if (digitalRead(7) == HIGH) {   // Look Right
+        pwm.setPWM(0, 0, xMovement);  // 280
+      }
 
+      else if (digitalRead(7) == LOW) {  // Look Left
+        tempVar = xMovement + 100;       // 380
+        pwm.setPWM(0, 0, tempVar);
+      }
+    }
 
-  xVal = xSum;
-  lexpulse = map(xVal, 0, 1023, 280, 380);
 
-  yVal = ySum;
-  leypulse = map(yVal, 0, 1023, 380, 500);
 
+    // Looking LEFT
+    if (receivedChar == 'L') {
+      digitalWrite(led, LOW);
+      delay(100);
+      Serial.println("Looking LEFT.");
+      digitalWrite(7, LOW);  // Set Eyes to move left
 
-  pwm.setPWM(0, 0, lexpulse);
-  pwm.setPWM(1, 0, leypulse);
 
+      xVal = xSum;
+      xMovement = map(yVal, 0, 1023, 280, 380);
 
-  if (digitalRead(7) == HIGH) {
-    pwm.setPWM(2, 0, 605);
-    pwm.setPWM(3, 0, 135);
-    pwm.setPWM(4, 0, 95);
-    pwm.setPWM(5, 0, 555);
-  }
+      pwm.setPWM(0, 0, xMovement);
+      Serial.println(xMovement);
 
-  else if (digitalRead(7) == LOW) {
-    pwm.setPWM(2, 0, TL_Lid);
-    pwm.setPWM(3, 0, BL_Lid);
-    pwm.setPWM(4, 0, TR_Lid);
-    pwm.setPWM(5, 0, BR_Lid);
-  }
 
-  delay(2500);    //2.5 Sec delay 
+      if (digitalRead(7) == HIGH) {   // Look Right
+        pwm.setPWM(0, 0, xMovement);  // 280
+      }
 
+      else if (digitalRead(7) == LOW) {  // Look Left
+        tempVar = xMovement + 100;       // 380
+        pwm.setPWM(0, 0, tempVar);
+      }
+    }
 
 
 
 
+    // Move eyes CENTER
+    if (receivedChar == 'C') {
+      digitalWrite(led, HIGH);
+      delay(100);
+      Serial.println("Looking Straight.");
+      digitalWrite(7, HIGH);  // Set Eyes to move up
 
 
+      xVal = xSum;
+      xMovement = map(yVal, 0, 1023, 280, 380);
 
-// Second Blink
+      pwm.setPWM(0, 0, xMovement);
+      xMovement = 330;
 
-  if (digitalRead(8) == HIGH && xSum < 1024) {
-    xSum += 20;
-  }
-  if (digitalRead(9) == HIGH && xSum > 0) {
-    xSum -= 20;
-  }
-  if (digitalRead(10) == HIGH && ySum < 700) {
-    ySum += 20;
-  }
-  if (digitalRead(11) == HIGH && ySum > 0) {
-    ySum -= 20;
-  }
+      if (digitalRead(7) == HIGH) {   // Look Right
+        pwm.setPWM(0, 0, xMovement);  // 280
+      }
 
+      else if (digitalRead(7) == LOW) {  // Look Left
+        tempVar = xMovement + 100;       // 380
+        pwm.setPWM(0, 0, tempVar);
+      }
+    }
+  // }
 
+    // Resetting for next loop
+    receivedChar = 0;
+    newData = false;
 
-  // Setup to Open eyes
-  Serial.println("Second Blink.");
-  digitalWrite(7, HIGH);  // Set Eyes to Close
-
-
-  // Serial.print("blinking: ");
-  // Serial.println(int(digitalRead(7)));
-  // Serial.print("y movement: ");
-  // Serial.println(ySum);
-
-  xVal = xSum;
-  lexpulse = map(xVal, 0, 1023, 280, 380);
-
-  yVal = ySum;
-  leypulse = map(yVal, 0, 1023, 380, 500);
-
-
-  pwm.setPWM(0, 0, lexpulse);
-  pwm.setPWM(1, 0, leypulse);
-
-
-  if (digitalRead(7) == HIGH) {  // Closes Eyes
-    pwm.setPWM(2, 0, 605);
-    pwm.setPWM(3, 0, 135);
-    pwm.setPWM(4, 0, 95);
-    pwm.setPWM(5, 0, 555);
-  }
-
-  else if (digitalRead(7) == LOW) {  // Open Eyes
-    pwm.setPWM(2, 0, TL_Lid);
-    pwm.setPWM(3, 0, BL_Lid);
-    pwm.setPWM(4, 0, TR_Lid);
-    pwm.setPWM(5, 0, BR_Lid);
-  }
-
-
-  // Gets ready to OPEN eyes
-  delay(200);            // 0.2 Second delay to replicate blinking
-  digitalWrite(7, LOW);  // Sets Eyes to OPEN
-
-
-  xVal = xSum;
-  lexpulse = map(xVal, 0, 1023, 280, 380);
-
-  yVal = ySum;
-  leypulse = map(yVal, 0, 1023, 380, 500);
-
-
-  pwm.setPWM(0, 0, lexpulse);
-  pwm.setPWM(1, 0, leypulse);
-
-
-  if (digitalRead(7) == HIGH) {
-    pwm.setPWM(2, 0, 605);
-    pwm.setPWM(3, 0, 135);
-    pwm.setPWM(4, 0, 95);
-    pwm.setPWM(5, 0, 555);
-  }
-
-  else if (digitalRead(7) == LOW) {
-    pwm.setPWM(2, 0, TL_Lid);
-    pwm.setPWM(3, 0, BL_Lid);
-    pwm.setPWM(4, 0, TR_Lid);
-    pwm.setPWM(5, 0, BR_Lid);
-  }
-
-  delay(2500);
-
-
-
-
-
-
-
-
-
-
-// Winking
-
-  if (digitalRead(8) == HIGH && xSum < 1024) {
-    xSum += 20;
-  }
-  if (digitalRead(9) == HIGH && xSum > 0) {
-    xSum -= 20;
-  }
-  if (digitalRead(10) == HIGH && ySum < 700) {
-    ySum += 20;
-  }
-  if (digitalRead(11) == HIGH && ySum > 0) {
-    ySum -= 20;
-  }
-
-
-
-  // Setup to Wink with Right Eye
-  Serial.println("*Wink*");
-  digitalWrite(7, HIGH);  // Set Right Eye to CLOSE
-
-
-  // Serial.print("blinking: ");
-  // Serial.println(int(digitalRead(7)));
-  // Serial.print("y movement: ");
-  // Serial.println(ySum);
-
-  xVal = xSum;
-  lexpulse = map(xVal, 0, 1023, 280, 380);
-
-  yVal = ySum;
-  leypulse = map(yVal, 0, 1023, 380, 500);
-
-
-  pwm.setPWM(0, 0, lexpulse);
-  pwm.setPWM(1, 0, leypulse);
-
-
-  if (digitalRead(7) == HIGH) {  // Closes Eyes
-    // pwm.setPWM(2, 0, 605);
-    // pwm.setPWM(3, 0, 135);
-    pwm.setPWM(4, 0, 95);
-    pwm.setPWM(5, 0, 555);
-  }
-
-  else if (digitalRead(7) == LOW) {  // Open Eyes
-    // pwm.setPWM(2, 0, TL_Lid);
-    // pwm.setPWM(3, 0, BL_Lid);
-    pwm.setPWM(4, 0, TR_Lid);
-    pwm.setPWM(5, 0, BR_Lid);
-  }
-
-
-  // Gets ready to OPEN eyes
-  // Serial.println("Getting Ready to Blink Quickly.");
-  delay(200);            // 0.2 Second delay to replicate blinking
-  digitalWrite(7, LOW);  // Sets Eyes to OPEN
-
-
-  xVal = xSum;
-  lexpulse = map(xVal, 0, 1023, 280, 380);
-
-  yVal = ySum;
-  leypulse = map(yVal, 0, 1023, 380, 500);
-
-
-  pwm.setPWM(0, 0, lexpulse);
-  pwm.setPWM(1, 0, leypulse);
-
-
-  if (digitalRead(7) == HIGH) {
-    pwm.setPWM(2, 0, 605);
-    pwm.setPWM(3, 0, 135);
-    pwm.setPWM(4, 0, 95);
-    pwm.setPWM(5, 0, 555);
-  }
-
-  else if (digitalRead(7) == LOW) {
-    // pwm.setPWM(2, 0, TL_Lid);
-    // pwm.setPWM(3, 0, BL_Lid);
-    pwm.setPWM(4, 0, TR_Lid);
-    pwm.setPWM(5, 0, BR_Lid);
-  }
 
 
 
   // Serial.println("Finished loop **********************************************");
   Serial.println("Resetting Loop.\n");
-  // delay(10000);     // 10 second delay
-  // delay(30000);  // 30 sec delay
-    delay(300000);  // LONG delay
+  delay(100);  // 2 second delay
 }
+// End of manual testing loop
