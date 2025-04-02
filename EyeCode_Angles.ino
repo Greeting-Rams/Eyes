@@ -41,7 +41,7 @@ int outputValue = 0;
 int switchval = 0;
 
 void setup() {
-  Serial.begin(3000);     // 3 sec delay
+  Serial.begin(3000);     // 1.5 sec delay
   Serial.println("\nStarting Program:\n");    // Just to verify in Monitor that code is running
 
   pinMode(8, INPUT);   //+x
@@ -120,7 +120,8 @@ delay(500);
   }
 
 
-delay(30000);           // 30 second delay before looking left
+// delay(3000);           // 3 second delay before looking left
+  delay(2000);
 // Move eyes Left
   Serial.println("Looking LEFT.");
   digitalWrite(7, LOW);  // Set Eyes to move left
@@ -143,26 +144,27 @@ delay(30000);           // 30 second delay before looking left
   }
 
 
-//   // Move eyes Center
+  // Move eyes Center
 // delay(3000);
-//   Serial.println("Looking Straight.");
-//   digitalWrite(7, HIGH);  // Set Eyes to move up
+  delay(2000);
+  Serial.println("Looking Straight.");
+  digitalWrite(7, HIGH);  // Set Eyes to move up
 
 
-//   xVal = xSum;
-//   xMovement = map(yVal, 0, 1023, 280, 380);
+  xVal = xSum;
+  xMovement = map(yVal, 0, 1023, 280, 380);
 
-//   pwm.setPWM(0, 0, xMovement);
-//   xMovement = 330;
+  pwm.setPWM(0, 0, xMovement);
+  xMovement = 330;
 
-//   if (digitalRead(7) == HIGH) {          // Look Right
-//     pwm.setPWM(0, 0, xMovement);      // 280
-//   }
+  if (digitalRead(7) == HIGH) {          // Look Right
+    pwm.setPWM(0, 0, xMovement);      // 280
+  }
 
-//   else if (digitalRead(7) == LOW) {      // Look Left
-//     tempVar = xMovement + 100;        // 380
-//     pwm.setPWM(0, 0, tempVar);
-//   }
+  else if (digitalRead(7) == LOW) {      // Look Left
+    tempVar = xMovement + 100;        // 380
+    pwm.setPWM(0, 0, tempVar);
+  }
 
 
 
@@ -246,7 +248,8 @@ delay(30000);           // 30 second delay before looking left
   // Serial.println("Finished loop **********************************************");
   Serial.println("Resetting Loop.\n");
   // delay(10000);     // 10 second delay
-  delay(30000);  // 30 sec delay
-    // delay(300000);  // LONG delay ~5 Min
+  // delay(30000);  // 30 sec delay
+  delay(2000);
+  // delay(300000);  // LONG delay ~5 Min
 }
 // End of manual testing loop
