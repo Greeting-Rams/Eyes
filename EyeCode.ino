@@ -1,8 +1,9 @@
 /*
 Greetings Ram - Blinking Eye Code
+          This version takes letters from Rasbperry Pi to control eyes
 Authors: Michael Lu & Jose Mojica-Ramos (Fall 2024)
 Editor: Jose Mojica-Ramos & Michelle Vasquez
-Edited: April 2, 2025
+Edited: April 9, 2025
 */
 
 
